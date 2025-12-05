@@ -93,9 +93,9 @@ switch conntype
 
     case 3 % Spatially embeded connectivity
 
-    file = 'PreparedData_fish_3';
-    dir = 'C:\Toni\Adrian\Codi\Dades\';
-    load([dir file],'Type','avg','xyz')
+    file = 'case3_connectivity';
+    dir = '.\';
+    load([dir file],'Type','xyz')
     
     XYZ = xyz(Type>-1,:);
     typ = Type(Type>-1);
