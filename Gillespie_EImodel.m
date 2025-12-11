@@ -46,7 +46,7 @@ active = init_state(1,:)';
 quiescent = init_state(2,:)';
 
 % Calculate vector of transition rates at initial time
-currents = W*active + I;
+currents = W*active + I(:,1);
 trans = beta .* (active==0) .*feval(response_fn,currents) + ...
     alpha.*(active==1);
 cum_trans=cumsum(trans);
@@ -56,8 +56,11 @@ cum_trans=cumsum(trans);
 % specified by trans, until time t_max is exceeded.
 
 while (curr_time < t_max)
+    past_time = curr_time;
+    Ipast = I(:,floor(past_time+1));
     curr_time = curr_time + dt;
-    
+    Icurr = I(:,floor(curr_time+1));
+
     % Call gillespie to pick update time, neuron updated, and new state
 
     % Calculates total network transition rate, as sum of transition
@@ -82,9 +85,9 @@ while (curr_time < t_max)
     
     % change transition rates of neurons affected by spike
     if(new_state(1) == 1)
-        currents = currents + W(:,i_update);
+        currents = currents + W(:,i_update) + (Icurr - Ipast);
     elseif(new_state(1)==0)
-        currents = currents - W(:,i_update);
+        currents = currents - W(:,i_update) - (Icurr - Ipast);
     end
     trans = beta .* (active==0) .*feval(response_fn,currents) + ...
         alpha.*(active==1);

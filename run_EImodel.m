@@ -1,6 +1,5 @@
-clc
-clear
-close
+
+clear all
 addpath(genpath(pwd));%include all subfolders
 
 % Construct connectivity:
@@ -10,7 +9,6 @@ addpath(genpath(pwd));%include all subfolders
 % conntype = 2 : sparse
 % conntype = 3 : spatially-embedded
 conntype = 3;
-% CHANGING CONNECTION TYPES HERE
 lambda = 200;
 [W,Ampli,NE,NI,typ,xyz] = Get_Connectivity(conntype,lambda);
 N = NE + NI;
@@ -30,9 +28,9 @@ t_min = 0;
 t_max = 1800;
 n_batch = 3;
 
-% Inputs: CHANGING INPUTS HERE
-%I = 0.001*ones(N,1); % constant input around 1
-I = 0.00001*(rand([N,t_max])*2-1) + 0.001; % input with random steps around 1
+% Inputs:
+%I = 0.001*ones(N,1);
+I = 0.001*ones(N,t_max*2);
 
 % run simulation:
 %---------------------------------------------
@@ -53,8 +51,7 @@ for n = 1:n_batch
     end
     
     [sp_times,sp_ids,network_state] = ...
-        Gillespie_EImodel_WIP(W,response_fn,beta_param,alpha_param,I,t_min,t_max,init_state);
-        % TIME DEPENDENT GILLESPIE HERE
+        Gillespie_EImodel(W,response_fn,beta_param,alpha_param,I,t_min,t_max,init_state);
 
     shift = (n-1)*t_max;
     spike_times = [spike_times (sp_times + shift)];
@@ -133,8 +130,8 @@ end
 % Get exponents:
 %-----------------------------
 % Maximum Likelihood Estimation:
-tau = mle(Size,'LowerBound',10,'UpperBound',10*N);
-Alpha = mle(Duration,'LowerBound',min(Duration),'UpperBound',max(Duration));
+tau = plmle(Size,'xmin',10,'xmax',10*N);
+Alpha = plmle(Duration,'xmin',min(Duration),'xmax',max(Duration));
 % Least-squares for <S>(T):
 cut = 1; %*resol; 
 X = Ts(Ts>=cut);
@@ -182,8 +179,8 @@ end
 % Get exponents:
 %-----------------------------
 % Maximum Likelihood Estimation:
-tau_F = mle(Size_F,'LowerBound',10,'UpperBound',10*N);
-Alpha_F = mle(Duration_F,'LowerBound',min(Duration_F),'UpperBound',max(Duration_F));
+tau_F = plmle(Size_F,'xmin',10,'xmax',10*N);
+Alpha_F = plmle(Duration_F,'xmin',min(Duration_F),'xmax',max(Duration_F));
 % Least-squares for <S>(T):
 cut = 1; %*resol; 
 X = Ts_F(Ts_F>=cut);
@@ -212,8 +209,8 @@ end
 % Get exponents:
 %-----------------------------
 % Maximum Likelihood Estimation:
-tau_Space = mle(Size_Space,'LowerBound',th,'UpperBound',10000);
-Alpha_Space = mle(Duration_Space,'LowerBound',5,'UpperBound',30/resol_F);
+tau_Space = plmle(Size_Space,'xmin',th,'xmax',10000);
+Alpha_Space = plmle(Duration_Space,'xmin',5,'xmax',30/resol_F);
 % Least-squares for <S>(T):
 cut = 4; %*resol; 
 X = Ts_Space(Ts_Space>=cut);
@@ -492,8 +489,8 @@ annotation('textbox',[0.5 .669 0.4 .01],'string','Non-spatial avalanches: calciu
 annotation('textbox',[0.52 .320 0.4 .01],'string','Spatial avalanches: calcium events','fontsize',12,'edgecolor','none','fontweight','bold')
 
 
-dir3='.\Grafics';
-figname = ['model_avalanches_lambda_' num2str(lambda)];
+dir3='C:\Users\Gunes\projects\gillespie-external-input\Grafics\';
+figname = ['model_avalanches_lambda_new' num2str(lambda)];
 exportgraphics(gcf,[dir3 figname '.tiff'],'Resolution',600)
 
 
