@@ -95,7 +95,7 @@ switch conntype
 
     file = 'case3_connectivity';
     dir = '.\';
-    load([dir file],'Type','xyz')
+    load([dir file],'Type','avg','xyz')
     
     XYZ = xyz(Type>-1,:);
     typ = Type(Type>-1);

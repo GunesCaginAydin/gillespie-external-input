@@ -1,4 +1,4 @@
-function [spike_times,spike_ids,network_state] = Gillespie_EImodel(W,response_fn,beta,alpha,I,t_min,t_max,init_state)
+function [spike_times,spike_ids,network_state,I_recons,times] = Gillespie_EImodel(W,response_fn,beta,alpha,I,t_min,t_max,init_state)
 
 % Simulates a 2-state Wilson-Cowan model with the Gillespie algorithm and
 % arbitrary weight matrix W, inputs I, and transition rates (alpha and 
@@ -38,6 +38,7 @@ new_states = zeros(2, expected_events);
 event_no = 0;
 curr_time = t_min;
 dt = 0;
+I_recons = [];
 
 % initialize network state vector - we'll keep one vector
 % for the active neurons and another for the quiescent ones
@@ -46,7 +47,7 @@ active = init_state(1,:)';
 quiescent = init_state(2,:)';
 
 % Calculate vector of transition rates at initial time
-currents = W*active + I;
+currents = W*active + I(:,1);
 trans = beta .* (active==0) .*feval(response_fn,currents) + ...
     alpha.*(active==1);
 cum_trans=cumsum(trans);
@@ -56,7 +57,11 @@ cum_trans=cumsum(trans);
 % specified by trans, until time t_max is exceeded.
 
 while (curr_time < t_max)
+    past_time = curr_time;
+    Ipast = I(:,floor(past_time+1));
     curr_time = curr_time + dt;
+    Icurr = I(:,floor(curr_time+1));
+    I_recons = [I_recons Icurr];
     
     % Call gillespie to pick update time, neuron updated, and new state
 
@@ -82,9 +87,9 @@ while (curr_time < t_max)
     
     % change transition rates of neurons affected by spike
     if(new_state(1) == 1)
-        currents = currents + W(:,i_update);
+        currents = currents + W(:,i_update) + (Icurr - Ipast);
     elseif(new_state(1)==0)
-        currents = currents - W(:,i_update);
+        currents = currents - W(:,i_update) - (Icurr - Ipast);
     end
     trans = beta .* (active==0) .*feval(response_fn,currents) + ...
         alpha.*(active==1);
