@@ -1,4 +1,4 @@
-function [spike_times,spike_ids,network_state] = Gillespie_EImodel(W,response_fn,beta,alpha,I,t_min,t_max,init_state)
+function [spike_times,spike_ids,network_state,I_recons,times] = Gillespie_EImodel(W,response_fn,beta,alpha,I,t_min,t_max,init_state)
 
 % Simulates a 2-state Wilson-Cowan model with the Gillespie algorithm and
 % arbitrary weight matrix W, inputs I, and transition rates (alpha and 
@@ -38,6 +38,7 @@ new_states = zeros(2, expected_events);
 event_no = 0;
 curr_time = t_min;
 dt = 0;
+I_recons = [];
 
 % initialize network state vector - we'll keep one vector
 % for the active neurons and another for the quiescent ones
@@ -60,7 +61,8 @@ while (curr_time < t_max)
     Ipast = I(:,floor(past_time+1));
     curr_time = curr_time + dt;
     Icurr = I(:,floor(curr_time+1));
-
+    I_recons = [I_recons Icurr];
+    
     % Call gillespie to pick update time, neuron updated, and new state
 
     % Calculates total network transition rate, as sum of transition

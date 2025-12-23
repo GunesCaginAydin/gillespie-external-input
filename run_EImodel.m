@@ -26,11 +26,11 @@ alpha_param = 0.1;
 % time window:
 t_min = 0;
 t_max = 1800;
-n_batch = 3;
+n_batch = 20; % epoch
 
 % Inputs:
-%I = 0.001*ones(N,1);
-I = 0.001*ones(N,t_max*2);
+%I = 0.0015*ones(N,t_max+5);
+I = 0.001*(rand([N,t_max+5])*2-1) + 0.001;
 
 % run simulation:
 %---------------------------------------------
@@ -50,7 +50,7 @@ for n = 1:n_batch
     init_state = network_state;
     end
     
-    [sp_times,sp_ids,network_state] = ...
+    [sp_times,sp_ids,network_state,Irc,tc] = ...
         Gillespie_EImodel(W,response_fn,beta_param,alpha_param,I,t_min,t_max,init_state);
 
     shift = (n-1)*t_max;
@@ -82,6 +82,12 @@ E_spike_ids = spike_ids(spike_ids<=NE);
 % I activity:
 I_spike_times = spike_times(spike_ids>NE);
 I_spike_ids = spike_ids(spike_ids>NE);
+
+% Current reconstruction errors:
+Iintrs = trapz(Irc,2)/size(Irc,2);
+Iint = trapz(I,2)/size(I,2);
+rcerr = mean(abs(Iintrs - Iint));
+tr = linspace(0,size(I,2),size(I,2));
 
 % Firing rates:
 Rates = zeros(1,N);
@@ -225,7 +231,7 @@ sigmaNuZ_Space = 1/a2;
 % Figures:
 %-----------------------------
 
-figure
+figure(1)
 xSize = 17; ySize = 12.5;
 xLeft = (21-xSize)/2; yTop = (30-ySize)/2;
 set(gcf,'PaperUnits','centimeters')
@@ -490,9 +496,20 @@ annotation('textbox',[0.52 .320 0.4 .01],'string','Spatial avalanches: calcium e
 
 
 dir3='C:\Users\Gunes\projects\gillespie-external-input\Grafics\';
-figname = ['model_avalanches_lambda_new' num2str(lambda)];
+figname = ['model_avalanches_lambda_new_bomba3' num2str(lambda)];
 exportgraphics(gcf,[dir3 figname '.tiff'],'Resolution',600)
 
+figure(2)
+plot(tr,I(1,:),'s-',LineWidth=1,Color='r')
+hold on
+plot(tc,Irc(1,1:end-1),'s-',LineWidth=1,Color='b')
+grid on
+legend(['I reconstruction','I original'])
+%set(gca,'xscale','log','yscale','log','fontsize',9)
+xlabel('Avalanche size S','fontsize',9)
+ylabel('Probability density','fontsize',9)
+
+sprintf('Absolute Mean Input Reconstruction Error: %.5f', rcerr)
 
 
 
